@@ -1,0 +1,20 @@
+= Apache Arrowの\nRubyバインディングを\nGObject Introspectionで
+
+: author
+   須藤功平
+: institution
+   株式会社クリアコード
+: content-source
+   名古屋Ruby会議03
+: date
+   2017-02-11
+: allotted-time
+   50m
+: theme
+   .
+
+= 内容
+
+  (1) まくら
+  (2) 本題
+  (3) オチ

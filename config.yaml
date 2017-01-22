@@ -1,0 +1,24 @@
+---
+id: nagoya-rubykaigi-03
+base_name: apache-arrow-gi-based-ruby-bindings
+tags:
+- rabbit
+- arrow
+- gobject-introspection
+- ruby
+- bindings
+presentation_date: 
+version: 1.0.0
+licenses: []
+slideshare_id: 
+speaker_deck_id: 
+ustream_id: 
+vimeo_id: 
+youtube_id: 
+author:
+  markup_language: :rd
+  name: 須藤功平
+  email: kou@clear-code.com
+  rubygems_user: kou
+  slideshare_user: kou
+  speaker_deck_user: 
