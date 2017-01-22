@@ -11,3 +11,4 @@ reader = ArrowIPC::FileReader.open(file)
 p reader.schema.fields.collect(&:name)
 record_batch = reader.get_record_batch(0)
 p record_batch.columns.collect(&:length)
+p record_batch.columns.collect {|column| column.get_value(0)}
