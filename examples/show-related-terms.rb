@@ -3,10 +3,13 @@
 require "groonga"
 require "arrow"
 
-Groonga::Database.open(ARGV[0])
+db_path = ARGV[0]
+output_path = ARGV[1]
+
+Groonga::Database.open(db_path)
 terms = Groonga["Words"]
 
-Arrow::IO::MemoryMappedFile.open(ARGV[1], :read) do |input_stream|
+Arrow::IO::MemoryMappedFile.open(output_path, :read) do |input_stream|
   Arrow::IPC::StreamReader.open(input_stream) do |reader|
     reader.each do |record_batch|
       related_terms = []

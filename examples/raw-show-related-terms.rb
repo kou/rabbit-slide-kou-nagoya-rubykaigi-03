@@ -3,14 +3,17 @@
 require "groonga"
 require "gi"
 
+db_path = ARGV[0]
+output_path = ARGV[1]
+
 Arrow = GI.load("Arrow")
 ArrowIO = GI.load("ArrowIO")
 ArrowIPC = GI.load("ArrowIPC")
 
-Groonga::Database.open(ARGV[0])
+Groonga::Database.open(db_path)
 terms = Groonga["Words"]
 
-input_stream = ArrowIO::MemoryMappedFile.open(ARGV[1], :read)
+input_stream = ArrowIO::MemoryMappedFile.open(output_path, :read)
 begin
   reader = ArrowIPC::StreamReader.open(input_stream)
   loop do
