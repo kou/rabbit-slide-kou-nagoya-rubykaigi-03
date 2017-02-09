@@ -12,6 +12,14 @@ CC BY-SA 4.0
 
   * 須藤功平（またはKouhei Sutou）
 
+=== 画像
+
+==== images/copy-data-between-system.png
+
+Apache License 2.0
+
+Copyright 2016 The Apache Software Foundation
+
 == 作者向け
 
 === 表示

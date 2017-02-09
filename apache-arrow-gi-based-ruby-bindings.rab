@@ -24,6 +24,20 @@
 Rubyで\n
 データ分析
 
+= データ分析？
+
+いろいろある
+
+= やりたいデータ分析
+
+(('tag:center'))
+全文検索関連
+
+  * 同義語・関連語の自動抽出\n
+    例：文字列とStringは同じ
+  * 最近アツいキーワードの抽出
+  * ...
+
 = 課題
 
   * 道具が足りない
@@ -38,7 +52,20 @@ Rubyで\n
 
 = 世間の様子
 
-  * JavaとPythonを組み合わせてデータ分析
+  * JavaとPython（とR）を使う
+    * 組み合わせてデータ分析
+
+= 組み合わせた様子
+
+  # image
+  # src = images/copy-data-between-system.png
+  # relative_width = 100
+
+(('note:https://arrow.apache.org/より'))
+
+= 組み合わせの課題
+
+  * xxx
 
 = GIの制限
 
