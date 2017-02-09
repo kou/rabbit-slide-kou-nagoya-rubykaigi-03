@@ -14,7 +14,12 @@ CC BY-SA 4.0
 
 === 画像
 
-==== images/copy-data-between-system.png
+==== Apache Arrow関連の画像
+
+以下の画像がApache Arrow関連の画像です。
+
+  * images/copy-data-between-system.png
+  * images/share-data-between-system.png
 
 Apache License 2.0
 

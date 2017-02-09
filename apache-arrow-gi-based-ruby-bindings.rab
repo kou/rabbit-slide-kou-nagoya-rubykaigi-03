@@ -61,11 +61,27 @@ Rubyで\n
   # src = images/copy-data-between-system.png
   # relative_width = 100
 
-(('note:https://arrow.apache.org/より'))
+(('note:https://arrow.apache.org/より（Apache License 2.0）'))
 
 = 組み合わせの課題
 
-  * xxx
+  * データ交換コストが高い
+    * データの直列化でCPUの8割を使用\n
+      by https://arrow.apache.org/
+
+= 解決方法
+
+データの\n
+フォーマットを\n
+統一しよう！
+
+= 統一した様子
+
+  # image
+  # src = images/share-data-between-system.png
+  # relative_width = 100
+
+(('note:https://arrow.apache.org/より（Apache License 2.0）'))
 
 = GIの制限
 
