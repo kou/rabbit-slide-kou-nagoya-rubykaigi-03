@@ -3,15 +3,12 @@
 import sys
 sys.path.append("/home/kou/work/cpp/arrow/python")
 
-import logging
 import json
 
 import scipy as sp
 import pandas as pd
 import pyarrow as A
 from sklearn.decomposition import LatentDirichletAllocation
-
-logging.basicConfig(level=logging.DEBUG)
 
 LDA = LatentDirichletAllocation
 
