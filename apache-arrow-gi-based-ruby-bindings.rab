@@ -86,7 +86,7 @@ Rubyで\n
 
 = これはチャンス！
 
-  * Rubyでも使えるようにすると…
+  * RubyがArrow対応すると…
     * 既存のシステムとやりとりできる
     * 「この部分だけはRubyを使う」を\n
       できる
@@ -115,7 +115,7 @@ Rubyで\n
 = Rroonga
 
   * 全文検索エンジン((*ライブラリー*))
-    * SQLとかじゃなく\n
+    * SQLで操作とかじゃなく\n
       ((*オブジェクト*))として触れる
 
 = オブジェクト例
@@ -140,7 +140,8 @@ Rubyで\n
 
   index = Groonga["Words.index"]
   token = "オブジェクト"
-  p index[token] # => 19048
+  p index.estimate_size(token)
+  # => 19048
   # 「オブジェクト」を含む文書は
   # 約19048個ありそう
 
@@ -278,7 +279,8 @@ GObject Introspectionの\n
 
 = PythonでLDA
 
-scikit-learn
+scikit-learn\n
+(('note:（gensimの方がよく使われているかも）'))
 
 = scikit-learnでLDA
 
@@ -336,9 +338,9 @@ scikit-learn
   # Arrowは高速に1次元・2次元配列を
   # 扱うAPIを提供するライブラリー
   builder = Arrow::UInt32ArrayBuilder.new
-  builder.append(29)
-  builder.append(9)
-  term_ids = builder.finish
+  builder.append(29) # 要素追加
+  builder.append(9)  # 要素追加
+  term_ids = builder.finish # 配列作成
   p term_ids.length       # => 2
   p term_ids.get_value(0) # => 29
   p term_ids.get_value(1) # => 9
@@ -358,7 +360,8 @@ scikit-learn
   builder.append(9)
   term_ids = builder.finish
   # ↓
-  term_ids = Arrow::UInt32ArrayBuilder.build([29, 9])
+  term_ids =
+    Arrow::UInt32ArrayBuilder.build([29, 9])
 
 = 一手間
 
@@ -522,6 +525,7 @@ Rubyっぽい！
 
   * RArrow
     * http://github.com/kou/rarrow
+    * (('note:RのArrowバインディングみたいでアレかもしれない'))
   * 他の一手間例もアリ
     * 例：(({.open {|io| ...}}))で自動(({close}))
 
@@ -560,7 +564,7 @@ Rubyっぽい！
   with A.io.MemoryMappedFile("/tmp/bow", "rb") as source:
       reader = A.ipc.StreamReader(source)
       for record_batch in reader: # ストリームで順に処理
-          # Pandasのデータフレームに変換
+          # Pandasのデータフレームに変換（ゼロコピー！）
           df = record_batch.to_pandas()
           # 疎な行列に変換
           corpus = csr_matrix((df["score"].values,
@@ -577,7 +581,7 @@ Rubyっぽい！
       n_top_terms = 10
       # このトピックに関連している
       # 上位10単語を計算
-      top_term_indexes =
+      top_term_indexes = # ↓[::-1]でreverse
           topic.argsort()[:-n_top_terms-1:-1]
       for i in top_term_indexes:
           term_id = i      # 単語ID
@@ -586,8 +590,8 @@ Rubyっぽい！
 
 = 単語IDじゃわからん！
 
-  * 単語は数値にして計算した
-    * 単語そのものを確認したい！
+  * 単語はIDにして計算した
+    * けど、確認は単語でしたい！
   * 単語とIDの管理は…Rroonga！
     * トピックをRubyに持っていかないと
     * (('wait'))そうだ！Apache Arrowだ！
@@ -629,8 +633,9 @@ Rubyっぽい！
     SR.open(input) do |reader|
       reader.each do |record_batch|
         record_batch.each do |record|
-          # 本当は関連度が高いものだけ表示
-          p [record["term_id"], record["score"]]
+          # 単語IDを単語に変換
+          term = index.table[record["term_id"]]
+          p [term, record["score"]]
         end
       end
     end
