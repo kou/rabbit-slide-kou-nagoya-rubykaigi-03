@@ -23,11 +23,16 @@ end
 
 entries = Groonga["Entries"]
 target_entries = entries.select do |record|
-  record.version == "2.4.0"
+  if use_filter
+    (record.version == "2.4.0") -
+      (record.document =~ "@todo")
+  else
+    record.version == "2.4.0"
+  end
 end
 n_entries = target_entries.size
-too_many_much_threshold = n_entries * 0.9
-too_less_much_threshold = n_entries * 0.01
+too_many_threshold = n_entries * 0.9
+too_less_threshold = n_entries * 0.01
 
 bow = {}
 index = Groonga["Words.Entries_document"]
@@ -37,11 +42,11 @@ index.table.open_cursor(:order_by => :id) do |table_cursor|
     n_match_documents = index.estimate_size(term)
     # p [term.key, n_match_documents, (n_match_documents / n_entries.to_f)]
     if use_filter
-      if n_match_documents <= too_less_much_threshold
+      if n_match_documents <= too_less_threshold
         p [:skip, :too_less, term.key, n_match_documents]
         next
       end
-      if n_match_documents >= too_many_much_threshold
+      if n_match_documents >= too_many_threshold
         p [:skip, :too_many, term.key, n_match_documents]
         next
       end
