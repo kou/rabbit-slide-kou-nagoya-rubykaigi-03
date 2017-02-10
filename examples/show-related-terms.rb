@@ -13,9 +13,12 @@ Arrow::IO::MemoryMappedFile.open(topics_path, :read) do |input_stream|
   Arrow::IPC::StreamReader.open(input_stream) do |reader|
     reader.each do |record_batch|
       related_terms = []
+      previous_score = nil
       record_batch.each do |record|
         score = record["score"]
-        next if score < 0.1
+        break if score < 0.1
+        previous_score ||= score
+        break if (previous_score - score) > (score / 2.0)
         term = Groonga::Record.new(terms, record["term_id"]).key
         related_terms << [term, score]
       end

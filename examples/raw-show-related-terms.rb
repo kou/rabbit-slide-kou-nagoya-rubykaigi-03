@@ -21,9 +21,12 @@ begin
     break if record_batch.nil?
     columns = record_batch.columns
     related_terms = []
+    previous_score = nil
     record_batch.n_rows.times do |i|
       score = columns[1].get_value(i)
-      next if score < 0.1
+      break if score < 0.1
+      previous_score ||= score
+      break if (previous_score - score) > (score / 2.0)
       term = Groonga::Record.new(terms, columns[0].get_value(i)).key
       related_terms << [term, score]
     end
