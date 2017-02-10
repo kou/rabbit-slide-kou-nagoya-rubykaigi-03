@@ -20,10 +20,24 @@ CC BY-SA 4.0
 
   * images/copy-data-between-system.png
   * images/share-data-between-system.png
+  * images/system-with-ruby.png
 
 Apache License 2.0
 
 Copyright 2016 The Apache Software Foundation
+
+==== Groonga関連の画像
+
+以下の画像がGroonga関連の画像です。
+
+  * images/groonga-logo.svg
+  * images/rroonga-logo.svg
+
+CC BY 3.0
+
+原著作者名は以下の通りです。
+
+  * Groongaプロジェクト
 
 == 作者向け
 

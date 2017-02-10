@@ -53,7 +53,8 @@ Rubyで\n
 = 世間の様子
 
   * 主にJavaとPythonを使う
-    * 組み合わせてデータ分析
+    * 道具が揃っている
+  * 組み合わせてデータ分析
 
 = 組み合わせた様子
 
@@ -82,6 +83,481 @@ Rubyで\n
   # relative_width = 100
 
 (('note:https://arrow.apache.org/より（Apache License 2.0）'))
+
+= これはチャンス！
+
+  * Rubyでも使えるようにすると…
+    * 既存のシステムとやりとりできる
+    * 「この部分だけはRubyを使う」を\n
+      できる
+
+= 一部でRuby
+
+  # image
+  # src = images/system-with-ruby.png
+  # relative_width = 100
+
+(('note:前述の図を変更（Apache License 2.0）'))
+
+= 一部でRubyを…使える？
+
+道具が\n
+ないじゃん！
+
+= 道具
+
+  # image
+  # src = images/rroonga-logo.svg
+  # relative_width = 100
+
+(('note:Groongプロジェクト（CC BY 3.0）'))
+
+= Rroonga
+
+  * 全文検索エンジン((*ライブラリー*))
+    * SQLとかじゃなく\n
+      ((*オブジェクト*))として触れる
+
+= オブジェクト例
+
+転置索引\n
+オブジェクト
+
+= 転置索引
+
+(('tag:center'))
+雑な説明
+
+  * (({Hash}))みたいなもの
+  * キー：
+    * トークン（単語みたいなもの）
+  * 値：
+    * キー（トークン）を含む文書の一覧
+
+= 転置索引オブジェクト（1）
+
+  # coderay ruby
+
+  index = Groonga["Words.index"]
+  token = "オブジェクト"
+  p index[token] # => 19048
+  # 「オブジェクト」を含む文書は
+  # 約19048個ありそう
+
+= 転置索引オブジェクト（2）
+
+  # coderay ruby
+
+  index.open_cursor(token) do |cursor|
+    # 最初の出現情報
+    posting = cursor.next
+    # 「オブジェクト」を含む最初の文書のID
+    p posting.record.id # => 17
+    # この文書が何個「オブジェクト」を含むか
+    p posting.term_frequency # => 1
+    # 文書の内容
+    puts posting.record.document
+  end
+
+= 分析に使ってみよう
+
+るりまを分析\n
+↓\n
+関連語を抽出
+
+= 関連語の抽出方法例
+
+  (1) 文書を前処理
+  (2) 全文書をトピックに分類\n
+      * どんなトピックがあるかは学習
+  (3) 同じトピックで使われやすい\n
+      単語を抽出\n
+      →関連語！
+
+= 文書の前処理
+
+単語の出現頻度\n
+(('note:（Bag of Wordsという）'))\n
+に変換
+
+= 単語の出現頻度
+
+  # coderay ruby
+  "名古屋マジ名古屋"
+  # ↓
+  {
+    "名古屋" => 2, # 2回
+    "マジ"   => 1, # 1回
+  }
+
+= 単語は数値に変換
+
+  # coderay ruby
+
+  # "名古屋" => 10
+  # "マジ"   => 20
+  {
+    10 => 2, # 「名古屋」2回
+    20 => 1, # 「マジ」1回
+  }
+
+= なんで数値にするの？
+
+計算しやすい
+
+= 転置索引で計算（1）
+
+  # coderay ruby
+
+  bow = {} # 「名古屋」の分だけ
+  index.open_cursor("名古屋") do |cursor|
+    cursor.each do |posting|
+      record_id      = posting.record_id
+      term_id        = posting.term_id # "名古屋"のID
+      term_frequency = posting.term_frequency # 出現回数
+      bow[record_id] ||= {}
+      bow[record_id][term_id] = term_frequency
+      # bow: {
+      #   2 => {"名古屋" => 9}  # 文書2では9回出現
+      #   5 => {"名古屋" => 19} # 文書5では19回出現
+      # }
+    end
+  end
+
+= 転置索引で計算（2）
+
+  # coderay ruby
+
+  bow = {}
+  index.table.each do |token| # 全トークンを処理
+    index.open_cursor(token) do |cursor|
+      cursor.each do |posting|
+        # ...同じ...
+      end
+    end
+  end
+  # bow: { # 完成！
+  #   2 => {"名古屋" => 9,  "マジ" => 2}
+  #   5 => {"名古屋" => 19, "寄席" => 1},
+  #   ...
+  # }
+
+= 前処理終わり
+
+  * 次はトピックに分類
+    * どんなトピックがあるかは学習
+
+= トピックの学習方法
+
+(('tag:center'))
+(('tag:x-large'))
+LDA\n
+(('note:（Latent Direchlet Allocation）'))
+
+(('note:他にも色々ある'))\n
+(('note:参考：http://www.ism.ac.jp/~daichi/lectures/H24-TopicModel/ISM-2012-TopicModels-daichi.pdf'))
+
+= RubyでLDA
+
+lda-ruby gem
+
+= RubyでLDAをしない！
+
+なぜなら！\n
+Apache Arrowとか\n
+GObject Introspectionの\n
+話をする\n
+機会がなくなるからだ！
+
+= PythonでLDA
+
+scikit-learn
+
+= scikit-learnでLDA
+
+  # coderay python
+  import sklearn.decomposition
+  LDA = sklearn.decomposition.LatentDirichletAllocation
+  model = LDA(n_topics=100, # 100トピックに分類
+              learning_method="online",
+              total_samples=10000) # 文書数は1万
+  for words in bag_of_words:
+    model.partial_fit(words) # 要フォーマット変換
+  model.components_ # ここに学習したトピックがある
+
+= 前処理結果がない！
+
+  * 前処理はRubyでやった
+    * 前処理結果がないと\n
+      scikit-learnで分析できない！
+  * どうしよう！
+    * (('wait'))そうだ！Apache Arrowだ！
+
+= Arrowでつながる世界
+
+  # image
+  # src = images/system-with-ruby.png
+  # relative_width = 100
+
+(('note:（Apache License 2.0）'))
+
+= RubyでArrow
+
+  * ArrowはC++のライブラリー
+    * Rubyからは使えない
+  * どうしよう！
+    * (('wait'))やる（バインディングを作る）
+
+= Arrowのバインディング
+
+  * arrow-glib
+    * github.com/kou/arrow-glib
+  * GObject Introspection対応
+    * バインディングを実行時に生成
+
+= 使い方：準備
+
+  # coderay ruby
+  require "gi"
+  Arrow = GI.load("Arrow")
+
+= 使い方：配列を作る
+
+  # coderay ruby
+
+  builder = Arrow::UInt32ArrayBuilder.new
+  builder.append(29)
+  builder.append(9)
+  term_ids = builder.finish
+  p term_ids.length       # => 2
+  p term_ids.get_value(0) # => 29
+  p term_ids.get_value(1) # => 9
+
+= 使いにくい！
+
+  * GObject Introspection
+    * だいたいいい感じになる！(('note:（すごい！）'))
+    * Ruby特有のところは一手間必要
+
+= 使いやすさ検討
+
+  # coderay ruby
+
+  builder = Arrow::UInt32ArrayBuilder.new
+  builder.append(29)
+  builder.append(9)
+  term_ids = builder.finish
+  # ↓
+  term_ids = Arrow::UInt32ArrayBuilder.build([29, 9])
+
+= 一手間
+
+  # coderay ruby
+  module Arrow
+    class ArrayBuilder
+      class << self
+        def build(values)
+          builder = new
+          values.each do |value|
+            builder.append(value)
+          end
+          builder.finish
+        end
+      end
+    end
+  end
+
+= もう一手間
+
+  # coderay ruby
+
+  module Arrow
+    class UInt32Array
+      class << self
+        def new(values)
+          UInt32ArrayBuilder.build(values)
+        end
+      end
+    end
+  end
+
+= 一手間後
+
+  # coderay ruby
+
+  builder = Arrow::UInt32ArrayBuilder.new
+  builder.append(29)
+  builder.append(9)
+  term_ids = builder.finish
+  # ↓
+  term_ids = Arrow::UInt32Array.new([29, 9])
+
+= さらに使いやすさ検討
+
+  # coderay ruby
+
+  p term_ids.get_value(0) # => 29
+  p term_ids.get_value(1) # => 9
+  # ↓
+  p term_ids[0] # => 29
+  p term_ids[1] # => 9
+
+= 二手間
+
+  # coderay ruby
+  module Arrow
+    class Array
+      def [](i)
+        get_value(i)
+      end
+    end
+  end
+
+= もう一手間
+
+  # coderay ruby
+  module Arrow
+    class Array
+      include Enumerable
+      def each
+        length.times do |i|
+          yield(self[i])
+        end
+      end
+    end
+  end
+
+= 二手間後
+
+  # coderay ruby
+
+  p term_ids.get_value(0) # => 29
+  p term_ids.get_value(1) # => 9
+  # ↓
+  p term_ids.to_a # => [29, 9]
+
+= 一手間はどこに書くの？
+
+  # coderay ruby
+
+  # こう？
+  require "gi"
+  Arrow = GI.load("Arrow")
+  module Arrow
+    class Array
+      # ...
+    end
+  end
+
+= 違う！
+
+  * (({GI.load}))はデモ用のAPI
+    * ちゃんと作るときは使わない
+  * (({GI::Loader}))を継承
+    * (({#post_load}))フック時に一手間
+
+= (({GI::Loader#post_load}))
+
+  # coderay ruby
+
+  module Arrow
+    class Loader < GI::Loader
+      private
+      def post_load(*args)
+        require "arrow/array"
+        require "arrow/array-builder"
+      end
+    end
+  end
+
+= (({arrow/array.rb}))
+
+  # coderay ruby
+
+  module Arrow
+    class Array
+      include Enumerable
+      def each
+        length.times do |i|
+          yield(self[i])
+        end
+      end
+    end
+  end
+
+= (({arrow.rb}))
+
+  # coderay ruby
+
+  require "arrow/loader"
+  module Arrow
+    Loader.load("Arrow", self)
+    # ↑の中で#post_loadが呼ばれる
+  end
+
+= 使い方
+
+  # coderay ruby
+
+  require "arrow"
+
+  term_ids = Arrow::UInt32Array.new([29, 9])
+  p term_ids.to_a # => [29, 9]
+
+= すごい！
+
+Rubyっぽい！
+
+= 実装
+
+  * RArrow
+    * http://github.com/kou/rarrow
+  * 他の一手間例もアリ
+    * 例：(({.open {|io| ...}}))で自動(({close}))
+
+= 前処理結果を渡す
+
+  * 忘れていたでしょ？
+  * 手順
+    (1) Rubyで書き出し
+    (2) Pythonで読み込み
+
+= Rubyで書き出し
+
+  # coderay ruby
+
+  FOS = Arrow::IO::FileOutputStream # 長いから
+  SW = Arrow::IPC::StreamWriter     # 長いから
+  FOS.open("/tmp/bow", false) do |output_stream|
+    # schema：カラム名と型の定義
+    SW.open(output_stream, schema) do |writer|
+      bow.each do |record_id, words|
+        # record_batch：
+        # テーブルからN行だけ抜き出したもの
+        writer.write_record_batch(record_batch)
+      end
+    end
+  end
+
+= Pythonで読み出し
+
+  # coderay python
+
+  import scipy as sp
+  import pandas as pd
+  import pyarrow as A
+  csr_matrix = sp.sparse.csr_matrix # 長いから
+  with A.io.MemoryMappedFile("/tmp/bow", "rb") as source:
+      reader = A.ipc.StreamReader(source)
+      for record_batch in reader:
+          # Pandasのデータフレームに変換
+          df = record_batch.to_pandas()
+          # 疎な行列に変換
+          corpus = csr_matrix((df["score"].values,
+                               df["term_id"].values,
+                               [0, df["term_id"].size]),
+                              shape=(1, n_features))
+          model.partial_fit(corpus)
 
 = GIの制限
 

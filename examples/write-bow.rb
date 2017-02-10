@@ -1,17 +1,13 @@
 #!/usr/bin/env ruby
 
 require "groonga"
-require "gi"
+require "arrow"
 
 db_path = ARGV[0]
 metadata_output_path = ARGV[1]
 data_output_path = ARGV[2]
 use_tfidf = (ARGV[3] != "tf")
 use_filter = (ARGV[4] != "raw")
-
-Arrow = GI.load("Arrow")
-ArrowIO = GI.load("ArrowIO")
-ArrowIPC = GI.load("ArrowIPC")
 
 Groonga::Database.open(db_path)
 
@@ -61,6 +57,7 @@ index.table.open_cursor(:order_by => :id) do |table_cursor|
         bow[posting.record_id] << [posting.term_id, score]
       end
     end
+    break
   end
 end
 
@@ -71,43 +68,11 @@ File.open(metadata_output_path, "w") do |metadata_file|
                      }.to_json)
 end
 
-module Arrow
-  class ArrayBuilder
-    class << self
-      def build(values)
-        builder = new
-        values.each do |value|
-          builder.append(value)
-        end
-        builder.finish
-      end
-    end
-  end
-
-  class UInt32Array
-    class << self
-      def new(values)
-        UInt32ArrayBuilder.build(values)
-      end
-    end
-  end
-
-  class DoubleArray
-    class << self
-      def new(values)
-        DoubleArrayBuilder.build(values)
-      end
-    end
-  end
-end
-
-output_stream = ArrowIO::FileOutputStream.open(data_output_path, false)
-begin
-  term_id_field = Arrow::Field.new("term_id", Arrow::UInt32DataType.new)
-  score_field = Arrow::Field.new("score", Arrow::DoubleDataType.new)
+Arrow::IO::FileOutputStream.open(data_output_path, false) do |output_stream|
+  term_id_field = Arrow::Field.new("term_id", :uint32)
+  score_field = Arrow::Field.new("score", :double)
   schema = Arrow::Schema.new([term_id_field, score_field])
-  writer = ArrowIPC::StreamWriter.open(output_stream, schema)
-  begin
+  Arrow::IPC::StreamWriter.open(output_stream, schema) do |writer|
     bow.each do |record_id, words|
       term_ids = Arrow::UInt32Array.new(words.collect(&:first))
       scores = Arrow::DoubleArray.new(words.collect(&:last))
@@ -116,9 +81,5 @@ begin
                                             [term_ids, scores])
       writer.write_record_batch(record_batch)
     end
-  ensure
-    writer.close
   end
-ensure
-  output_stream.close
 end
