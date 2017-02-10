@@ -746,13 +746,21 @@ Garbage out
 
 = おしらせ（1）
 
-  * Rubyでデータ分析したいなら\n
-    クリアコードに相談してね
-    * 道具の用意・活用を手伝える
+    * Rubyでデータ分析したい人は\n
+      クリアコードに相談してね！
+      * 道具の用意・活用を手伝える
+
+  # image
+  # src = images/clear-code.svg
+  # relative_width = 100
 
 = おしらせ（2）
 
-  * Groonga Meatup名古屋2017\n
-    開催！
-    * 時間：明日の午前（10:00-）
-    * 場所：Misoca
+    * Groonga Meatup名古屋2017\n
+      開催！
+      * 時間：明日の午前（10:00-）
+      * 場所：Misoca
+
+  # image
+  # src = images/groonga-logo.svg
+  # relative_height = 100
