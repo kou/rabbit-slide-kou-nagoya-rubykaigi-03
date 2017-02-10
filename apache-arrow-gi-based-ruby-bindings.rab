@@ -289,7 +289,7 @@ scikit-learn\n
   LDA = sklearn.decomposition.LatentDirichletAllocation
   model = LDA(n_topics=100, # 100トピックに分類
               learning_method="online",
-              total_samples=10000) # 文書数は1万
+              total_samples=len(bag_of_words)) # 文書数
   for words in bag_of_words: # 前処理結果
     model.partial_fit(words) # 要フォーマット変換
   model.components_ # ここに学習したトピックがある
@@ -297,6 +297,7 @@ scikit-learn\n
 = 前処理結果がない！
 
   * 前処理はRubyでやった
+    * Python側にはない
     * 前処理結果がないと\n
       scikit-learnで分析できない！
   * どうしよう！
@@ -366,16 +367,14 @@ scikit-learn\n
 = 一手間
 
   # coderay ruby
-  module Arrow
-    class ArrayBuilder
-      class << self
-        def build(values)
-          builder = new
-          values.each do |value|
-            builder.append(value)
-          end
-          builder.finish
+  class Arrow::ArrayBuilder
+    class << self
+      def build(values)
+        builder = new
+        values.each do |value|
+          builder.append(value)
         end
+        builder.finish
       end
     end
   end
@@ -384,12 +383,10 @@ scikit-learn\n
 
   # coderay ruby
 
-  module Arrow
-    class UInt32Array
-      class << self
-        def new(values)
-          UInt32ArrayBuilder.build(values)
-        end
+  class Arrow::UInt32Array
+    class << self
+      def new(values)
+        UInt32ArrayBuilder.build(values)
       end
     end
   end
@@ -418,24 +415,20 @@ scikit-learn\n
 = 二手間
 
   # coderay ruby
-  module Arrow
-    class Array
-      def [](i)
-        get_value(i)
-      end
+  class Arrow::Array
+    def [](i)
+      get_value(i)
     end
   end
 
 = もう一手間
 
   # coderay ruby
-  module Arrow
-    class Array
-      include Enumerable
-      def each
-        length.times do |i|
-          yield(self[i])
-        end
+  class Arrow::Array
+    include Enumerable
+    def each
+      length.times do |i|
+        yield(self[i])
       end
     end
   end
@@ -473,13 +466,11 @@ scikit-learn\n
 
   # coderay ruby
 
-  module Arrow
-    class Loader < GI::Loader
-      private
-      def post_load(*args)
-        require "arrow/array"
-        require "arrow/array-builder"
-      end
+  class Arrow::Loader < GI::Loader
+    private
+    def post_load(*args)
+      require "arrow/array"
+      require "arrow/array-builder"
     end
   end
 
@@ -487,13 +478,11 @@ scikit-learn\n
 
   # coderay ruby
 
-  module Arrow
-    class Array
-      include Enumerable
-      def each
-        length.times do |i|
-          yield(self[i])
-        end
+  class Arrow::Array
+    include Enumerable
+    def each
+      length.times do |i|
+        yield(self[i])
       end
     end
   end
@@ -524,7 +513,7 @@ Rubyっぽい！
 = 実装
 
   * RArrow
-    * http://github.com/kou/rarrow
+    * github.com/kou/rarrow
     * (('note:RのArrowバインディングみたいでアレかもしれない'))
   * 他の一手間例もアリ
     * 例：(({.open {|io| ...}}))で自動(({close}))
@@ -761,8 +750,7 @@ Garbage out
 
 = おしらせ（2）
 
-    * Groonga Meatup名古屋2017\n
-      開催！
+    * Groonga Meatup名古屋2017
       * 時間：明日の午前（10:00-）
       * 場所：Misoca
 
