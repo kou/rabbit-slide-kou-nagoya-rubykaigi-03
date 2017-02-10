@@ -22,6 +22,7 @@ Groonga::Schema.define do |schema|
 end
 
 entries = Groonga["Entries"]
+total_n_entries = entries.size
 target_entries = entries.select do |record|
   if use_filter
     (record.version == "2.4.0") -
@@ -52,7 +53,7 @@ index.table.open_cursor(:order_by => :id) do |table_cursor|
       end
     end
     max_term_id = [max_term_id, term.id].max
-    df = Math.log(n_entries.to_f / n_match_documents)
+    df = Math.log(total_n_entries.to_f / n_match_documents)
     index.open_cursor(term.id,
                       :with_position => false) do |index_cursor|
       index_cursor.each(:reuse_posting_object => true) do |posting|
