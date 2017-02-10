@@ -34,7 +34,7 @@ Rubyで\n
 全文検索関連
 
   * 同義語・関連語の自動抽出\n
-    例：文字列とStringは同じ
+    例：整数とIntegerは同じ
   * 最近アツいキーワードの抽出
   * ...
 
@@ -205,7 +205,14 @@ Rubyで\n
 
 計算しやすい
 
-= 転置索引で計算（1）
+= Rroongaで前処理できる？
+
+  * 出現回数は求められる？
+    * 👌：(({posting.term_frequency}))
+  * 単語を数値に変換できる？
+    * 👌：全文検索エンジンの必須機能
+
+= Rroongaで前処理（1）
 
   # coderay ruby
 
@@ -217,14 +224,14 @@ Rubyで\n
       term_frequency = posting.term_frequency # 出現回数
       bow[record_id] ||= {}
       bow[record_id][term_id] = term_frequency
-      # bow: {
+      # bow: { # ↓実際は文字列じゃなくてID
       #   2 => {"名古屋" => 9}  # 文書2では9回出現
       #   5 => {"名古屋" => 19} # 文書5では19回出現
       # }
     end
   end
 
-= 転置索引で計算（2）
+= Rroongaで前処理（2）
 
   # coderay ruby
 
@@ -252,7 +259,7 @@ Rubyで\n
 (('tag:center'))
 (('tag:x-large'))
 LDA\n
-(('note:（Latent Direchlet Allocation）'))
+(('note:（Latent Dirichlet Allocation/潜在的ディリクレ配分法）'))
 
 (('note:他にも色々ある'))\n
 (('note:参考：http://www.ism.ac.jp/~daichi/lectures/H24-TopicModel/ISM-2012-TopicModels-daichi.pdf'))
@@ -281,7 +288,7 @@ scikit-learn
   model = LDA(n_topics=100, # 100トピックに分類
               learning_method="online",
               total_samples=10000) # 文書数は1万
-  for words in bag_of_words:
+  for words in bag_of_words: # 前処理結果
     model.partial_fit(words) # 要フォーマット変換
   model.components_ # ここに学習したトピックがある
 
@@ -312,6 +319,7 @@ scikit-learn
 
   * arrow-glib
     * github.com/kou/arrow-glib
+    * Arrowのラッパー・C APIを提供
   * GObject Introspection対応
     * バインディングを実行時に生成
 
@@ -325,6 +333,8 @@ scikit-learn
 
   # coderay ruby
 
+  # Arrowは高速に1次元・2次元配列を
+  # 扱うAPIを提供するライブラリー
   builder = Arrow::UInt32ArrayBuilder.new
   builder.append(29)
   builder.append(9)
@@ -333,11 +343,11 @@ scikit-learn
   p term_ids.get_value(0) # => 29
   p term_ids.get_value(1) # => 9
 
-= 使いにくい！
+= 少し…使いにくい！
 
   * GObject Introspection
     * だいたいいい感じになる！(('note:（すごい！）'))
-    * Ruby特有のところは一手間必要
+    * が！Ruby特有のところは一手間必要
 
 = 使いやすさ検討
 
@@ -518,6 +528,7 @@ Rubyっぽい！
 = 前処理結果を渡す
 
   * 忘れていたでしょ？
+    * Arrowの話をしていたのはこのため
   * 手順
     (1) Rubyで書き出し
     (2) Pythonで読み込み
@@ -529,10 +540,10 @@ Rubyっぽい！
   FOS = Arrow::IO::FileOutputStream # 長いから
   SW = Arrow::IPC::StreamWriter     # 長いから
   FOS.open("/tmp/bow", false) do |output_stream|
-    # schema：カラム名と型の定義
+    # schema：カラム名と型の定義（省略）
     SW.open(output_stream, schema) do |writer|
       bow.each do |record_id, words|
-        # record_batch：
+        # record_batch（省略）：
         # テーブルからN行だけ抜き出したもの
         writer.write_record_batch(record_batch)
       end
@@ -543,13 +554,12 @@ Rubyっぽい！
 
   # coderay python
 
-  import scipy as sp
+  from scipy.sparse import csr_matrix
   import pandas as pd
   import pyarrow as A
-  csr_matrix = sp.sparse.csr_matrix # 長いから
   with A.io.MemoryMappedFile("/tmp/bow", "rb") as source:
       reader = A.ipc.StreamReader(source)
-      for record_batch in reader:
+      for record_batch in reader: # ストリームで順に処理
           # Pandasのデータフレームに変換
           df = record_batch.to_pandas()
           # 疎な行列に変換
@@ -557,8 +567,192 @@ Rubyっぽい！
                                df["term_id"].values,
                                [0, df["term_id"].size]),
                               shape=(1, n_features))
-          model.partial_fit(corpus)
+          model.partial_fit(corpus) # 学習
 
-= GIの制限
+= トピックを確認
 
-  * デフォルト値は今のところ未サポート
+  # coderay python
+
+  for topic in model.components_:
+      n_top_terms = 10
+      # このトピックに関連している
+      # 上位10単語を計算
+      top_term_indexes =
+          topic.argsort()[:-n_top_terms-1:-1]
+      for i in top_term_indexes:
+          term_id = i      # 単語ID
+          score = topic[i] # 関連度
+          print("%s:%s" % (term_id, score))
+
+= 単語IDじゃわからん！
+
+  * 単語は数値にして計算した
+    * 単語そのものを確認したい！
+  * 単語とIDの管理は…Rroonga！
+    * トピックをRubyに持っていかないと
+    * (('wait'))そうだ！Apache Arrowだ！
+
+= Arrowでつながる世界
+
+  # image
+  # src = images/system-with-ruby.png
+  # relative_width = 100
+
+(('note:（Apache License 2.0）'))
+
+= Pythonで書き出し
+
+  # coderay python
+
+  with open("/tmp/topics", "wb") as sink:
+      # schema：batch.schemaで取得できる（省略）
+      writer = A.ipc.StreamWriter(sink, schema)
+      def topic_to_df(topic):
+          # 前述のトピックを確認した処理と同じ
+          values = [[i, topic[i]]
+                    for i in topic.argsort()[:-10-1:-1]]
+          return pd.DataFrame(values,
+                              columns=["term_id", "score"])
+      for topic in model.components_:
+          df = topic_to_df(topic)
+          batch = A.RecordBatch.from_pandas(df)
+          writer.write_batch(batch)
+      writer.close()
+
+= Rubyで読み込み
+
+  # coderay ruby
+
+  MMF = Arrow::IO::MemoryMappedFile # 長いから
+  SR = Arrow::IPC::StreamReader     # 長いから
+  MMF.open("/tmp/topics", :read) do |input|
+    SR.open(input) do |reader|
+      reader.each do |record_batch|
+        record_batch.each do |record|
+          # 本当は関連度が高いものだけ表示
+          p [record["term_id"], record["score"]]
+        end
+      end
+    end
+  end
+
+= 実際の結果
+
+  1: uzqpuaglzig, あきらめ, ご覧
+  2: useloopback, タスク
+  3: プラットホーム, mydog
+  4: delegateclass, barbar
+  ...
+
+(('tag:center'))
+(('wait'))微妙…
+
+= 大事なこと
+
+Garbage in,\n
+Garbage out
+
+= 前処理をがんばる
+
+  * いらない文書を無視
+  * いらないトークンを無視
+
+= いらない文書を無視
+
+  # coderay ruby
+
+  entries = Groonga["Entries"]
+  # 全文検索エンジンで検索するので高速！すごい！
+  target_entries = entries.select do |record|
+    (record.version == "2.4.0") -
+      (record.document =~ "@todo")
+      # ↑@todoな文書を対象外
+  end
+  # ... do |posting|
+    # 存在チェックも全文検索エンジンがやるので高速！
+    next if target_entries.key?(posting.record_id)
+  # ... end
+
+= いらないトークンを無視
+
+  # coderay ruby
+
+  n_entries = target_entries.size
+  # ほとんどの文書に含まれるなら重要じゃない
+  too_many_threshold = n_entries * 0.9
+  # ごく一部の文書にしか含まれないなら重要じゃない
+  too_less_threshold = n_entries * 0.01
+  # ... do |term|
+    n_match_documents = index.estimate_size(term)
+    next if n_match_documents >= too_much_threshold
+    next if n_match_documents <= too_less_threshold
+  # ... end
+
+= 実際の結果
+
+  1: self, ブロック
+  2: each, enumerator
+  3: integer, 整数, 表示
+  4: ruby, object
+  ...
+
+(('tag:center'))
+(('wait'))それっぽくなってきた！
+
+= まとめ（1）
+
+  * Rubyでデータ分析
+    * 全部はムリ
+    * でも一部ならいける
+
+= まとめ（2）
+
+  * 一部ならいけるのは…
+    * Apache Arrowの登場\n
+      データ交換しやすくなる
+    * Rroongaの存在\n
+      Rubyで高速に自然言語処理できる
+
+= まとめ（3）
+
+  * RubyでApache Arrow
+    * バインディングが必要
+    * GObject Introspection\n
+      ベースで作った（arrow-glib）
+
+= まとめ（4）
+
+  * GObject Introspection
+    * だいたいいい感じ
+    * さらに一手間でグッとよくなる
+
+= まとめ（5）
+
+  * 実際に分析してみた
+    * Rubyで前処理\n
+      ↓Arrow
+    * Pythonで分析\n
+      ↓Arrow
+    * Rubyで確認\n
+      (('note:（本当は全文検索用DBに入れて活用する）'))
+
+= まとめ（6）
+
+  * Rubyでデータ分析いけそう！
+    * Arrowでデータの受け渡しが容易に\n
+      →分析処理へのRubyの参加が容易に
+    * RroongaでRubyでも高速に\n
+      自然言語処理をできる
+
+= おしらせ（1）
+
+  * Rubyでデータ分析したいなら\n
+    クリアコードに相談してね
+    * 道具の用意・活用を手伝える
+
+= おしらせ（2）
+
+  * Groonga Meatup名古屋2017\n
+    開催！
+    * 時間：明日の午前（10:00-）
+    * 場所：Misoca
