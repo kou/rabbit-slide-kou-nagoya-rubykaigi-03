@@ -19,12 +19,17 @@ if len(sys.argv) >= 5:
     n_documents = int(sys.argv[4])
 else:
     n_documents = None
+if len(sys.argv) >= 6:
+    n_topics = int(sys.argv[5])
+else:
+    n_topics = None
 
-n_topics = 100
+if n_topics is None or n_topics == -1:
+    n_topics = 100
 
 with open(metadata_path) as metadata_file:
     metadata = json.load(metadata_file)
-if n_documents is None:
+if n_documents is None or n_documents == -1:
     n_documents = metadata["n_documents"]
 else:
     n_documents = min(n_documents, metadata["n_documents"])
