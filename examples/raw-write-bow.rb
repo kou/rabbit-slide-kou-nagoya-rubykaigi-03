@@ -16,7 +16,7 @@ Groonga::Database.open(db_path)
 
 n_entries = Groonga["Entries"].size
 too_many_much_threshold = n_entries * 0.25
-too_small_much_threshold = n_entries * 0.001
+too_less_much_threshold = n_entries * 0.001
 
 bow = {}
 index = Groonga["Words.Entries_document"]
@@ -25,8 +25,8 @@ index.table.open_cursor(:order_by => :id) do |table_cursor|
   table_cursor.each do |term|
     n_match_documents = index.estimate_size(term)
     # p [term.key, n_match_documents, (n_match_documents / n_entries.to_f)]
-    if n_match_documents <= too_small_much_threshold
-      p [:skip, :too_small, term.key, n_match_documents]
+    if n_match_documents <= too_less_much_threshold
+      p [:skip, :too_less, term.key, n_match_documents]
       next
     end
     if n_match_documents >= too_many_much_threshold
