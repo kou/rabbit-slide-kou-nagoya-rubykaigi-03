@@ -7,12 +7,23 @@ db_path = ARGV[0]
 metadata_output_path = ARGV[1]
 data_output_path = ARGV[2]
 use_tfidf = (ARGV[3] != "tf")
+use_filter = (ARGV[4] != "raw")
 
 Arrow = GI.load("Arrow")
 ArrowIO = GI.load("ArrowIO")
 ArrowIPC = GI.load("ArrowIPC")
 
 Groonga::Database.open(db_path)
+
+Groonga::Schema.define do |schema|
+  schema.create_table("Words",
+                      :type => :patricia_trie,
+                      :key_type => "ShortText",
+                      :default_tokenizer => "TokenMecab",
+                      :normalizer => "NormalizerAuto") do |table|
+    table.index("Entries.document")
+  end
+end
 
 n_entries = Groonga["Entries"].size
 too_many_much_threshold = n_entries * 0.25
@@ -25,13 +36,15 @@ index.table.open_cursor(:order_by => :id) do |table_cursor|
   table_cursor.each do |term|
     n_match_documents = index.estimate_size(term)
     # p [term.key, n_match_documents, (n_match_documents / n_entries.to_f)]
-    if n_match_documents <= too_less_much_threshold
-      p [:skip, :too_less, term.key, n_match_documents]
-      next
-    end
-    if n_match_documents >= too_many_much_threshold
-      p [:skip, :too_many, term.key, n_match_documents]
-      next
+    if use_filter
+      if n_match_documents <= too_less_much_threshold
+        p [:skip, :too_less, term.key, n_match_documents]
+        next
+      end
+      if n_match_documents >= too_many_much_threshold
+        p [:skip, :too_many, term.key, n_match_documents]
+        next
+      end
     end
     max_term_id = [max_term_id, term.id].max
     df = Math.log(n_entries.to_f / n_match_documents)
