@@ -21,9 +21,13 @@ Groonga::Schema.define do |schema|
   end
 end
 
-n_entries = Groonga["Entries"].size
-too_many_much_threshold = n_entries * 0.25
-too_less_much_threshold = n_entries * 0.001
+entries = Groonga["Entries"]
+target_entries = entries.select do |record|
+  record.version == "2.4.0"
+end
+n_entries = target_entries.size
+too_many_much_threshold = n_entries * 0.9
+too_less_much_threshold = n_entries * 0.01
 
 bow = {}
 index = Groonga["Words.Entries_document"]
@@ -47,7 +51,9 @@ index.table.open_cursor(:order_by => :id) do |table_cursor|
     index.open_cursor(term.id,
                       :with_position => false) do |index_cursor|
       index_cursor.each(:reuse_posting_object => true) do |posting|
-        next unless posting.record.version.key == "2.4.0"
+        if target_entries[posting.record_id].nil?
+          next
+        end
         bow[posting.record_id] ||= []
         if use_tfidf
           score = posting.term_frequency / df
@@ -57,7 +63,6 @@ index.table.open_cursor(:order_by => :id) do |table_cursor|
         bow[posting.record_id] << [posting.term_id, score]
       end
     end
-    break
   end
 end
 
