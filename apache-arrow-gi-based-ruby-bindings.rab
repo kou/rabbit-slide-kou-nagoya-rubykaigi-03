@@ -757,3 +757,10 @@ Garbage out
   # image
   # src = images/groonga-logo.svg
   # relative_height = 100
+
+= 別案
+
+  * RroongaのPython版を作る
+    * RubyもArrowも必要なくなる…
+    * けど、より高速に前処理できる！
+    * (('wait'))Cythonで作ろうかと思っている…
